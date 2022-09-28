@@ -1,16 +1,37 @@
 import os
 import time
 import requests
-from playsound import playsound
+import sys
+#from playsound import playsound
 
 # Global data log
-challenges = {"agent-console": [],"break-in-at-headquarters-1": [],"break-in-at-headquarters-3": [],"hidden-pages-and-robots": [],"log4j": [],"well-known": [],"agent-inspector": [],"break-in-at-headquarters-2": [],"break-in-at-headquarters-4": [],"is-this-the-metaverse": [],"react-obfuscation": [],"its-bugdroid": [],"learn-once-write-anywhere": [],"data-breach": [],"foss-enthusiast": [],"corrupted-image": [],"escaping-the-pyjail-2": [],"hashdump-1": [],"microsoft-and-zip": [],"scratched-qr-code": [],"escaping-the-pyjail-1": [],"escaping-the-pyjail-3": [],"hashdump-2": [],"sanity-check": [],"vimtastic": [],"2pow6-all-your-base-are-belong-to-us-based-1": [],"caesar-salad-and-notes-1": [],"numbers-encoding-1": [],"2pow6-image-based-2": [],"caesar-salad-and-notes-2": [],"zero-and-ones-encoding-2": []}
+URL = "https://test.ctf.itemize.no"
+LIVESCOREBOARD_URL = "http://localhost:3000"
+challenges = {}
 ids = {}
+
+# Get challenges
+headers = {
+    "Authorization": "Bearer <token here>"
+}
+x = requests.get(f"{URL}/api/v1/challs", headers=headers)
+for chall in x.json()["data"]:
+    challenges[chall["id"]] = []
+print(challenges)
+
+x = requests.get(f"{URL}/api/v1/leaderboard/now?limit=100&offset=0", headers=headers)
+leaderboard = x.json()["data"]["leaderboard"]
+requests.post(f"{LIVESCOREBOARD_URL}/score", json={"score": leaderboard})
+print(leaderboard)
+#requests.post(f"{LIVESCOREBOARD_URL}/pwn", json={"team": "test", "challenge": "test-chall"})
+#requests.post(f"{LIVESCOREBOARD_URL}/blood", json={"team": "test", "challenge": "test-chall"})
+#sys.exit(0)
+
 
 # First loop getting challenge solves
 for chall in challenges:
     print(chall)
-    x = requests.get(f"https://ctf.itemize.no/api/v1/challs/{chall}/solves?limit=10&offset=0")
+    x = requests.get(f"{URL}/api/v1/challs/{chall}/solves?limit=100&offset=0")
     solves = x.json()["data"]["solves"]
     for solve in solves:
         sid = solve["id"]
@@ -24,8 +45,14 @@ print("checking...")
 while True:
     print("checking..")
     time.sleep(2)
+    # Push scoreboard
+    x = requests.get(f"{URL}/api/v1/leaderboard/now?limit=100&offset=0", headers=headers)
+    leaderboard = x.json()["data"]["leaderboard"]
+    requests.post(f"{LIVESCOREBOARD_URL}/score", json={"score": leaderboard})
+    
+    # Check solves
     for chall in challenges:
-        x = requests.get(f"https://ctf.itemize.no/api/v1/challs/{chall}/solves?limit=10&offset=0")
+        x = requests.get(f"{URL}/api/v1/challs/{chall}/solves?limit=100&offset=0")
         solves = x.json()["data"]["solves"]
         for solve in solves:
             sid = solve["id"]
@@ -35,10 +62,12 @@ while True:
                 challenges[chall].append(sid)
                 if len(challenges[chall]) == 1:
                     # First blood announce
-                    playsound("./blood.mp3")
+                    #playsound("./blood.mp3")
                     print("[First blood]", team)
+                    requests.post(f"{LIVESCOREBOARD_URL}/blood", json={"team": team, "challenge": chall})
                 else:
                     # Pwn announce
-                    playsound("./pwn.mp3")
+                    #playsound("./pwn.mp3")
                     print("[PWN]", team)
+                    requests.post(f"{LIVESCOREBOARD_URL}/pwn", json={"team": team, "challenge": chall})
 
