@@ -5,14 +5,14 @@ import sys
 #from playsound import playsound
 
 # Global data log
-URL = "https://test.ctf.itemize.no"
+URL = "https://ctf.itemize.no"
 LIVESCOREBOARD_URL = "http://localhost:3000"
 challenges = {}
 ids = {}
 
 # Get challenges
 headers = {
-    "Authorization": "Bearer <token here>"
+    "Authorization": f"Bearer {os.environ['RCTF_TOKEN']}"
 }
 x = requests.get(f"{URL}/api/v1/challs", headers=headers)
 for chall in x.json()["data"]:
